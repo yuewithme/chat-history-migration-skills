@@ -1,0 +1,30 @@
+name: Validate public Skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate release boundary and syntax
+        shell: powershell
+        run: .\tools\validate-release.ps1
+      - name: Test Doubao archive core
+        shell: powershell
+        run: node --test .\doubao-local-backup\scripts\tests\archive-core.test.js .\doubao-local-backup\scripts\tests\monitoring.test.js
+      - name: Test Feishu message synchronization
+        shell: powershell
+        run: .\feishu-local-backup\scripts\test_sync_feishu_messages.ps1
+      - name: Test Feishu knowledge synchronization
+        shell: powershell
+        run: .\feishu-local-backup\scripts\test_sync_feishu_knowledge.ps1

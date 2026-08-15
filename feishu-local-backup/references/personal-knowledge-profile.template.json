@@ -1,0 +1,39 @@
+{
+  "schema": "personal-knowledge-profile-v1",
+  "owner_label": "<owner>",
+  "mission": "Build a durable personal data foundation for future AI reasoning.",
+  "updated_at": "<ISO-8601>",
+  "principles": {
+    "treat_accessible_source_items_as_data": true,
+    "separate_knowledge_value_from_storage_value": true,
+    "inspect_content_before_exclusion": true,
+    "preserve_ambiguous_items": true,
+    "automatic_deletion": false,
+    "source_system_deletion": false
+  },
+  "current_objectives": [],
+  "value_dimensions": [
+    "personal_relevance",
+    "reusability",
+    "uniqueness",
+    "information_density",
+    "timeliness",
+    "extractability",
+    "provenance",
+    "storage_cost"
+  ],
+  "format_preferences": {
+    "chats": "json",
+    "documents": "markdown",
+    "structured_tables": "json",
+    "binary_files": "supporting_source_only"
+  },
+  "review": {
+    "default_action": "review",
+    "preview_chars": 1200,
+    "large_binary_bytes": 52428800,
+    "inspect_representative_attachments": true
+  },
+  "explicit_decisions": [],
+  "source_overrides": []
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feishu Personal Data Foundation"
+  short_description: "Sync Feishu data into an AI-ready private data foundation"
+  default_prompt: "Use $feishu-local-backup to synchronize all accessible Feishu chats, files, Wiki, documents, and structured content into my private personal data foundation."

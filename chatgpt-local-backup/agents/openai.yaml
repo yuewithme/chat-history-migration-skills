@@ -1,0 +1,4 @@
+interface:
+  display_name: "ChatGPT 本地完整备份"
+  short_description: "每周增量导出、去重并验证 ChatGPT 本地历史备份"
+  default_prompt: "Use $chatgpt-local-backup to incrementally update and verify my local ChatGPT backup on D:."

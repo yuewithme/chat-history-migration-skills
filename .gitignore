@@ -1,0 +1,36 @@
+# Dependencies and generated output
+node_modules/
+coverage/
+*.log
+*.tmp
+*.partial
+
+# Credentials and local configuration
+.env
+.env.*
+*.token
+*.cookie
+*.cookies
+credentials*
+secrets*
+tokens*
+authorization*
+
+# Runtime archives must never enter this repository
+archive/
+archives/
+data/
+exports/
+attachments/
+state/
+working/
+final/
+reports/
+logs/
+
+# Local tools and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.local.json

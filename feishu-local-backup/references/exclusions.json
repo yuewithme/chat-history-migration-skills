@@ -1,0 +1,6 @@
+{
+  "schema": "feishu-local-backup-exclusions-v3",
+  "updated_at": "2026-08-15T00:00:00+08:00",
+  "chat_exclusions": [],
+  "note": "This is a schema-safe empty default. Store real decisions in <archive>/_meta/policies/accounts/<open_id>/chat_exclusions.json; treat <archive>/_meta/exclusions.json as a legacy compatibility input only. Match by stable chat_id."
+}
