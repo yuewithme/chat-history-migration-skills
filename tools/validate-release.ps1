@@ -94,6 +94,8 @@ if ($errors.Count) {
 [ordered]@{
     passed = $true
     skills = $skills
-    files = (Get-ChildItem -LiteralPath $root -File -Recurse -Force).Count
+    files = @(Get-ChildItem -LiteralPath $root -File -Recurse -Force | Where-Object {
+        -not $_.FullName.StartsWith($gitRoot + '\', [StringComparison]::OrdinalIgnoreCase)
+    }).Count
     checked_at = (Get-Date).ToString('o')
 } | ConvertTo-Json -Depth 4

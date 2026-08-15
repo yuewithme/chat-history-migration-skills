@@ -171,3 +171,5 @@ finally {
     Remove-Item Env:FAKE_LARK_LOG -ErrorAction SilentlyContinue
     if (Test-Path -LiteralPath $fixture -PathType Container) { Remove-Item -LiteralPath $fixture -Recurse -Force }
 }
+
+exit 0

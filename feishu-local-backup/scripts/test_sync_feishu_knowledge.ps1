@@ -130,3 +130,5 @@ finally {
         [System.IO.Directory]::Delete($fixture, $true)
     }
 }
+
+exit 0
