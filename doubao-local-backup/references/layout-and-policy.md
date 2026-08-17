@@ -10,22 +10,34 @@
         ├── tool/
         ├── state/raw/
         ├── working/
+        ├── documents/
+        │   ├── markdown/
+        │   ├── json/
+        │   └── indexes/
         ├── reports/
         ├── final/Doubao_Backup/
+        │   ├── conversations/
+        │   ├── attachments/files/
+        │   └── metadata/
         └── logs/
 ```
 
-`ArchiveHome` is selected per machine; never hardcode its drive. `profile` is a stable lowercase slug for one account/archive lineage. The marker contains no absolute path or credentials.
+`archive-profile.json` layout version 2 contains the fixed relative paths. It contains no absolute path or credentials.
 
 | Directory | Content |
 |---|---|
 | `tool/` | Locks and reproducible tool cache |
 | `state/raw/` | Resumable conversation/attachment state and checkpoints |
 | `working/` | Temporary downloads and fresh candidates |
+| `documents/markdown/` | Persistent Markdown documents |
+| `documents/json/` | Structured document JSON |
+| `documents/indexes/` | Document catalogs and links |
 | `reports/` | Sanitized run, preflight, and failure reports |
-| `final/Doubao_Backup/` | Only published, verified master copy |
+| `final/Doubao_Backup/conversations/` | Canonical chat JSON |
+| `final/Doubao_Backup/attachments/files/` | Original downloaded files |
+| `final/Doubao_Backup/metadata/` | Manifests, indexes, and verification JSON |
 | `logs/` | Sanitized operational logs |
 
-Build every candidate under `working`. Publish only when `metadata/final-verification.json` has `passed: true`; keep the prior final until replacement succeeds and rebuild state afterward. Never infer deletion from one remote listing.
+`documents/` is persistent and is not replaced during backup publication. Build candidates under `working`; publish only after verification passes.
 
 Conversation names use `YYYY-MM-DD__sanitized-title__full-conversation-id.json`. Attachment names are content-addressed; identical bytes share one stored file and manifest record.

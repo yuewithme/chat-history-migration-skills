@@ -2,7 +2,7 @@
 
 const path = require('path');
 const { ensureDir } = require('./lib/atomic-json');
-const { arg, has, initializeArchive, resolveArchiveRoot } = require('./lib/archive-profile');
+const { arg, has, initializeArchive, PROFILE_DIRECTORIES, resolveArchiveRoot } = require('./lib/archive-profile');
 const { initializeRawState } = require('./lib/raw-state');
 
 const resolved = resolveArchiveRoot('doubao');
@@ -13,7 +13,7 @@ const marker = initializeArchive({
   root,
   source: 'doubao',
   profileId,
-  directories: ['working', 'final', 'logs', 'tool', 'reports', 'state'],
+  directories: PROFILE_DIRECTORIES,
   legacyIndicators: ['final/Doubao_Backup', 'state/raw'],
   adoptExisting: has('--adopt-existing'),
 });

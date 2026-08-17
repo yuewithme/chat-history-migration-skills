@@ -50,7 +50,7 @@
 }
 ```
 
-`archive-profile.json` 不保存绝对路径、账号令牌或浏览器凭据，因此整个存档换盘或换电脑后仍能识别。Skill 在运行前校验 `source`，避免把飞书数据写入豆包目录。
+`layout_version` 由各来源定义；豆包当前为 2。`archive-profile.json` 不保存绝对路径、账号令牌或浏览器凭据。
 
 ## 3. 各来源 profile 内部内容
 
@@ -75,7 +75,8 @@ doubao/<profile>/
 ├── tool/                      # 锁和可重建工具缓存
 ├── state/raw/                 # 检查点与增量数据
 ├── working/                   # 临时附件与候选
-├── final/Doubao_Backup/       # 唯一已验证正式备份
+├── final/Doubao_Backup/       # conversations JSON、原始附件和 metadata
+├── documents/                 # markdown、json 和 indexes
 ├── logs/
 └── reports/
 ```

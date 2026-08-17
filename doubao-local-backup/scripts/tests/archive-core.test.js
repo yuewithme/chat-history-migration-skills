@@ -8,6 +8,7 @@ const { execFileSync } = require('child_process');
 const test = require('node:test');
 
 const scripts = path.resolve(__dirname, '..');
+const { PROFILE_PATHS, readArchiveProfile } = require('../lib/archive-profile');
 const { atomicWriteJson } = require('../lib/atomic-json');
 const { emptyCheckpoint, saveCheckpoint } = require('../lib/checkpoint');
 const { buildConversationEnvelope } = require('../lib/doubao-adapter');
@@ -221,13 +222,39 @@ test('raw export orchestration runs end-to-end with a synthetic fixture and skip
 test('backup initializer creates the fixed tree and a safe checkpoint', t => {
   const root = tempRoot(t);
   execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'test'], { stdio: 'pipe' });
-  for (const relative of ['state/raw/conversations', 'state/raw/files', 'working', 'final', 'logs', 'tool', 'reports']) {
+  for (const relative of ['state/raw/conversations', 'state/raw/files', 'working', 'final', 'logs', 'tool', 'reports', 'documents/markdown', 'documents/json', 'documents/indexes']) {
     assert.equal(fs.existsSync(path.join(root, relative)), true, relative);
   }
   const checkpoint = JSON.parse(fs.readFileSync(path.join(root, 'state', 'raw', 'checkpoint.json'), 'utf8'));
   assert.equal(checkpoint.provider, 'doubao');
   const profile = JSON.parse(fs.readFileSync(path.join(root, 'archive-profile.json'), 'utf8'));
   assert.equal(profile.source, 'doubao');
+  assert.equal(profile.layout_version, 2);
+  assert.deepEqual(profile.paths, PROFILE_PATHS);
+  assert.equal(Object.values(profile.paths).some(value => path.isAbsolute(value)), false);
+  assert.equal(readArchiveProfile(root, 'doubao').legacy, false);
+});
+
+test('profile layout rejects changed or escaping paths', t => {
+  const root = tempRoot(t);
+  execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'test'], { stdio: 'pipe' });
+  const markerPath = path.join(root, 'archive-profile.json');
+  const profile = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
+  profile.paths.document_markdown = '../outside';
+  writeJson(markerPath, profile);
+  assert.throws(() => readArchiveProfile(root, 'doubao'), /Invalid archive profile path/);
+});
+
+test('legacy adoption adds layout metadata without moving existing data', t => {
+  const root = tempRoot(t);
+  const sentinel = path.join(root, 'final', 'Doubao_Backup', 'conversations', 'existing.json');
+  writeJson(sentinel, { provider: 'doubao' });
+  execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'primary', '--adopt-existing'], { stdio: 'pipe' });
+  assert.equal(fs.existsSync(sentinel), true);
+  assert.equal(fs.existsSync(path.join(root, 'documents', 'markdown')), true);
+  const profile = readArchiveProfile(root, 'doubao').marker;
+  assert.equal(profile.layout_version, 2);
+  assert.deepEqual(profile.paths, PROFILE_PATHS);
 });
 
 test('organize, verify, publish, and rebuild preserve data and deduplicate attachments', t => {
