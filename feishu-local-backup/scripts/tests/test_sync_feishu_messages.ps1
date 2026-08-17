@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+$scriptRoot = Split-Path -Parent $PSScriptRoot
 $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 $tempBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd('\')
 $fixture = Join-Path $tempBase ("feishu-sync-fixture-{0}" -f [guid]::NewGuid().ToString('N'))
@@ -76,12 +77,12 @@ if ($Rest[0] -eq 'im' -and $Rest[1] -eq '+chat-messages-list') {
     })}
     $policiesPath = Join-Path $fixture 'policies.json'
     Write-Utf8 $policiesPath ($policies | ConvertTo-Json -Depth 10)
-    $sync = Join-Path $PSScriptRoot 'sync_feishu_messages.ps1'
+    $sync = Join-Path $scriptRoot 'sync_feishu_messages.ps1'
 
     $env:FAKE_LARK_SCENARIO = 'full'
     $full = & $sync -ArchiveRoot $archive -Mode Full -ThreadMode All -LarkCliPath $fakeCli -PoliciesPath $policiesPath -NoOpen | ConvertFrom-Json
     Assert-True ($full.status -eq 'complete') 'full synchronization should complete'
-    Assert-True ($full.chats_visible -eq 2 -and $full.chats_active -eq 1) 'excluded chat must stay out of active indexes'
+    Assert-True ($full.chats_visible -eq 2 -and $full.chats_active -eq 1) "excluded chat must stay out of active indexes (schema=$($full.schema), visible=$($full.chats_visible), active=$($full.chats_active), processed=$($full.chats_processed), excluded=$($full.chats_excluded), succeeded=$($full.chats_succeeded), failed=$($full.chats_failed))"
     $activePath = Get-ChildItem -LiteralPath (Join-Path $archive 'chats\raw') -File -Filter '*--oc_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.json' | Select-Object -First 1
     Assert-True ($null -ne $activePath) 'active raw JSON should exist'
     Assert-True (-not (Get-ChildItem -LiteralPath (Join-Path $archive 'chats\raw') -File -Filter '*--oc_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json')) 'excluded raw JSON must not exist'
@@ -97,10 +98,10 @@ if ($Rest[0] -eq 'im' -and $Rest[1] -eq '+chat-messages-list') {
     Assert-True (Test-Path -LiteralPath $accountPolicyPath -PathType Leaf) 'effective exclusions must be persisted under the authenticated user'
     $accountPolicy = Get-Content -LiteralPath $accountPolicyPath -Raw -Encoding UTF8 | ConvertFrom-Json
     Assert-True (@($accountPolicy.chat_exclusions).Count -eq 1) 'the user-scoped exclusion must contain the confirmed chat'
-    $setter = Join-Path $PSScriptRoot 'set_account_chat_exclusion.ps1'
+    $setter = Join-Path $scriptRoot 'set_account_chat_exclusion.ps1'
     $setResult = & $setter -ArchiveRoot $archive -AccountKey 'ou_fixture' -ChatId 'oc_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' -Title 'Excluded Chat' -Disposition purge -Scope @('messages','members','attachments','future_downloads') -Reason 'updated fixture decision' | ConvertFrom-Json
     Assert-True ($setResult.ok -and $setResult.policies -eq 1) 'account exclusion setter must update the scoped policy'
-    $policyPreview = & (Join-Path $PSScriptRoot 'apply_chat_exclusions.ps1') -ArchiveRoot $archive | ConvertFrom-Json
+    $policyPreview = & (Join-Path $scriptRoot 'apply_chat_exclusions.ps1') -ArchiveRoot $archive | ConvertFrom-Json
     Assert-True ($policyPreview.excluded_groups -eq 1) 'default exclusion apply path must resolve the authenticated user policy rather than the empty Skill template'
 
     $env:FAKE_LARK_SCENARIO = 'incremental'
@@ -131,7 +132,7 @@ if ($Rest[0] -eq 'im' -and $Rest[1] -eq '+chat-messages-list') {
     $resolvedGap = @($gaps | Where-Object { $_.stage -eq 'chat_messages' -and $_.resource_id -eq 'oc_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' -and $_.resolved_at })
     Assert-True ($resolvedGap.Count -eq 1 -and $resolvedGap[0].status -eq 'resolved') 'a later successful pull must resolve the durable chat gap'
 
-    $merge = Join-Path $PSScriptRoot 'merge_chat_envelope.ps1'
+    $merge = Join-Path $scriptRoot 'merge_chat_envelope.ps1'
     $partialPath = Join-Path $fixture 'partial.json'
     $windowPath = Join-Path $fixture 'window.json'
     $partialOutput = Join-Path $fixture 'partial-merged.json'
@@ -156,12 +157,12 @@ if ($Rest[0] -eq 'im' -and $Rest[1] -eq '+chat-messages-list') {
     $failedManifest = Get-Content -LiteralPath (Join-Path $archive '_meta\manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     Assert-True ($latestRun.status -eq 'failed_validation' -and $failedManifest.export_status -eq 'failed_validation') 'validation failure must not leave a false complete status'
     Remove-Item -LiteralPath $invalidJsonPath -Force
-    $null = & (Join-Path $PSScriptRoot 'archive_maintenance.ps1') -Action Rehash -ArchiveRoot $archive | ConvertFrom-Json
+    $null = & (Join-Path $scriptRoot 'archive_maintenance.ps1') -Action Rehash -ArchiveRoot $archive | ConvertFrom-Json
 
     $report = Get-Content -LiteralPath (Join-Path $archive '_meta\reports\chat-overview.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $keys = @(@($report.tables).key | Sort-Object)
     Assert-True (($keys -join ',') -eq 'group_attachment_top10,group_message_top10,p2p_attachment_top10,p2p_message_top10') 'report must contain exactly four required tables'
-    $verify = & (Join-Path $PSScriptRoot 'archive_maintenance.ps1') -Action VerifyHashes -ArchiveRoot $archive -FullHash | ConvertFrom-Json
+    $verify = & (Join-Path $scriptRoot 'archive_maintenance.ps1') -Action VerifyHashes -ArchiveRoot $archive -FullHash | ConvertFrom-Json
     Assert-True ($verify.valid -and $verify.cardinality_ok) 'final checksum verification must pass'
 
     [ordered]@{ok=$true;full_messages=2;incremental_messages=3;excluded_chat_requests=0;failure_preserved_prior_good=$true;gap_recovered=$true;coverage_guarded=$true;false_complete_prevented=$true;checksum_valid=$true;fixture=$fixture} | ConvertTo-Json -Depth 10

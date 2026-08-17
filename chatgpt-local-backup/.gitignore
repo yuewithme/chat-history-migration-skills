@@ -1,0 +1,9 @@
+node_modules/
+*.log
+*.tmp
+*.token
+.env
+exports/
+working/
+final/
+ChatGPT_Backup/

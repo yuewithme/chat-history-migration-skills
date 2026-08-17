@@ -11,8 +11,9 @@ function arg(name, position, fallback = null) {
 }
 const rawDir = path.resolve(arg('--raw', 2) || '');
 const finalDir = path.resolve(arg('--out', 3) || '');
-const toolRoot = path.resolve(arg('--tool', 4, 'D:\\ChatGPT_Backup\\tool\\export-chatgpt'));
-if (!rawDir || !finalDir) throw new Error('Usage: node organize-backup.js --raw <raw-dir> --out <candidate-dir> [--tool <tool-dir>]');
+const toolArg = arg('--tool', 4);
+if (!rawDir || !finalDir || !toolArg) throw new Error('Usage: node organize-backup.js --raw <raw-dir> --out <candidate-dir> --tool <tool-dir>');
+const toolRoot = path.resolve(toolArg);
 
 const ensureDir = p => fs.mkdirSync(p, { recursive: true });
 const writeJson = (p, v) => fs.writeFileSync(p, JSON.stringify(v, null, 2) + '\n', 'utf8');

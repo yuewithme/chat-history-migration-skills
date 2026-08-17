@@ -3,15 +3,17 @@
 const fs = require('fs');
 const path = require('path');
 const { assertInside, ensureDir } = require('./lib/atomic-json');
+const { readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 
 function arg(name, fallback = null) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] : fallback;
 }
 
-const root = path.resolve(arg('--root', 'D:\\Doubao_Backup'));
+const { root } = resolveArchiveRoot('doubao');
+readArchiveProfile(root, 'doubao', ['final/Doubao_Backup', 'state/raw']);
 const candidate = path.resolve(arg('--candidate') || '');
-if (!arg('--candidate')) throw new Error('Usage: node publish-backup.js --candidate <candidate-dir> [--root <backup-root>]');
+if (!arg('--candidate')) throw new Error('Usage: node publish-backup.js --root <profile-root> --candidate <candidate-dir>');
 const workingRoot = path.join(root, 'working');
 const finalRoot = path.join(root, 'final');
 const final = path.join(finalRoot, 'Doubao_Backup');

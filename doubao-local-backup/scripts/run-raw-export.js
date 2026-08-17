@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson } = require('./lib/atomic-json');
+const { readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 const { buildConversationEnvelope, discoverConversations, fetchConversationPage } = require('./lib/doubao-adapter');
 const { checkpointSnapshotHash, loadExecutionPlan, remoteSnapshotHash } = require('./lib/monitoring');
 const {
@@ -46,7 +47,6 @@ function liveAdapter(pageSize) {
   };
 }
 
-const rawDir = path.resolve(arg('--raw', 'D:\\Doubao_Backup\\state\\raw'));
 const fixture = arg('--fixture');
 const limitValue = arg('--limit');
 const limit = limitValue == null ? null : Number(limitValue);
@@ -56,6 +56,11 @@ if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 20) throw new Erro
 const adapter = fixture ? fixtureAdapter(fixture) : liveAdapter(pageSize);
 const executionPlanPath = arg('--plan');
 if (!fixture && !executionPlanPath) throw new Error('Live export requires --plan from the automatic planning step');
+const { root } = resolveArchiveRoot('doubao');
+if (!fixture) readArchiveProfile(root, 'doubao', ['final/Doubao_Backup', 'state/raw']);
+const rawDir = path.resolve(arg('--raw', path.join(root, 'state', 'raw')));
+const workingRoot = path.join(root, 'working', 'downloads');
+process.env.DOUBAO_WORKING_ROOT = workingRoot;
 const execution = executionPlanPath ? loadExecutionPlan(path.resolve(executionPlanPath)) : null;
 
 (async () => {
@@ -136,8 +141,7 @@ const execution = executionPlanPath ? loadExecutionPlan(path.resolve(executionPl
         } finally {
           if (attachment.cleanup && attachment.source_path) {
             const temp = path.resolve(attachment.source_path);
-            const working = path.resolve('D:\\Doubao_Backup\\working\\downloads');
-            const relative = path.relative(working, temp);
+            const relative = path.relative(workingRoot, temp);
             if (relative && !relative.startsWith('..') && !path.isAbsolute(relative) && fs.existsSync(temp)) fs.rmSync(temp, { force: true });
           }
         }

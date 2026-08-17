@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+$scriptRoot = Split-Path -Parent $PSScriptRoot
 $fixture = Join-Path ([System.IO.Path]::GetTempPath()) ('feishu-knowledge-test-' + [guid]::NewGuid().ToString('N'))
 $archive = Join-Path $fixture 'archive'
 $fakeCli = Join-Path $fixture 'fake-lark-cli.ps1'
@@ -83,12 +84,12 @@ try {
     [System.IO.Directory]::CreateDirectory($archive) | Out-Null
     [System.IO.File]::WriteAllText($fakeCli, $fake, $utf8NoBom)
 
-    $inventoryJson = & (Join-Path $PSScriptRoot 'sync_feishu_knowledge.ps1') -ArchiveRoot $archive -Mode Full -ContentMode Knowledge -LarkCliPath $fakeCli -SkipFinalize | ConvertFrom-Json
+    $inventoryJson = & (Join-Path $scriptRoot 'sync_feishu_knowledge.ps1') -ArchiveRoot $archive -Mode Full -ContentMode Knowledge -LarkCliPath $fakeCli -SkipFinalize | ConvertFrom-Json
     $gapDetails = if (Test-Path -LiteralPath (Join-Path $archive '_meta\gaps.json')) { Get-Content -LiteralPath (Join-Path $archive '_meta\gaps.json') -Encoding utf8 -Raw } else { '' }
     Assert-True ($inventoryJson.status -eq 'inventory_complete') ("Inventory did not complete: " + ($inventoryJson | ConvertTo-Json -Depth 12 -Compress) + " gaps=" + $gapDetails)
     Assert-True ($inventoryJson.inventory.discovered -eq 11) 'Expected 11 unique Drive/Wiki records.'
 
-    $contentJson = & (Join-Path $PSScriptRoot 'sync_feishu_knowledge_content.ps1') -ArchiveRoot $archive -ContentMode Knowledge -LarkCliPath $fakeCli -SkipFinalize | ConvertFrom-Json
+    $contentJson = & (Join-Path $scriptRoot 'sync_feishu_knowledge_content.ps1') -ArchiveRoot $archive -ContentMode Knowledge -LarkCliPath $fakeCli -SkipFinalize | ConvertFrom-Json
     Assert-True ($contentJson.status -eq 'complete') 'Content stage did not complete.'
     Assert-True ($contentJson.markdown -eq 4) 'Expected four Markdown knowledge artifacts.'
     Assert-True ($contentJson.structured_exports -eq 3) 'Expected Sheet, Base and Slides exports.'
@@ -109,11 +110,11 @@ try {
     $policyPath = Join-Path $archive '_meta\policies\excluded_files.ndjson'
     [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($policyPath)) | Out-Null
     [System.IO.File]::WriteAllText($policyPath, (([ordered]@{resource_id='bin2';action='exclude';prevent_future_download=$true} | ConvertTo-Json -Compress) + [Environment]::NewLine), $utf8NoBom)
-    $binaryJson = & (Join-Path $PSScriptRoot 'sync_feishu_knowledge_content.ps1') -ArchiveRoot $archive -ContentMode KnowledgeAndBinaries -LarkCliPath $fakeCli -MaxBinaryBytes 104857600 -SkipFinalize | ConvertFrom-Json
+    $binaryJson = & (Join-Path $scriptRoot 'sync_feishu_knowledge_content.ps1') -ArchiveRoot $archive -ContentMode KnowledgeAndBinaries -LarkCliPath $fakeCli -MaxBinaryBytes 104857600 -SkipFinalize | ConvertFrom-Json
     Assert-True ($binaryJson.binaries_downloaded -eq 0) 'A tombstoned or oversized binary was downloaded.'
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $archive 'drive\files\bin2--small-file.pdf'))) 'Tombstone did not prevent the small-file request.'
 
-    $plan = & (Join-Path $PSScriptRoot 'sync_feishu_all.ps1') -ArchiveRoot $archive -PlanOnly | ConvertFrom-Json
+    $plan = & (Join-Path $scriptRoot 'sync_feishu_all.ps1') -ArchiveRoot $archive -PlanOnly | ConvertFrom-Json
     Assert-True (@($plan.stages).Count -eq 6) 'Unified plan is incomplete.'
 
     [ordered]@{

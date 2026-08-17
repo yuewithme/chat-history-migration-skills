@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson, atomicWriteText } = require('./lib/atomic-json');
+const { readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 
 function arg(name, fallback = null) {
   const index = process.argv.indexOf(name);
@@ -40,7 +41,8 @@ function jsonFiles(directory) {
   });
 }
 
-const root = path.resolve(arg('--root', 'D:\\Doubao_Backup'));
+const { root } = resolveArchiveRoot('doubao');
+readArchiveProfile(root, 'doubao', ['final/Doubao_Backup', 'state/raw']);
 const planId = arg('--plan-id');
 if (!planId || !/^[A-Za-z0-9_-]+$/.test(planId)) throw new Error('Usage: node write-result-report.js --plan-id <plan-id> [execution counts]');
 
@@ -126,7 +128,7 @@ const html = `<!doctype html>
 <section><h2>本轮执行</h2><div class="grid">${metric('扫描会话', execution.discovered)}${metric('变化会话已保存', execution.saved)}${metric('未变化已跳过', execution.skipped)}${metric('采集失败', execution.failed)}${metric('本轮附件处理', execution.attachments_saved)}${metric('附件失败', execution.attachments_failed)}</div></section>
 <section><h2>当前完整存档</h2><div class="grid">${metric('会话', result.final.conversations)}${metric('唯一消息', result.final.messages)}${metric('附件引用', result.final.attachment_references)}${metric('物理附件文件', result.final.attachment_files)}</div></section>
 <section><h2>完整性复验</h2><div class="grid">${metric('解析失败', result.verification.parse_failures)}${metric('重复会话', result.verification.duplicate_conversations)}${metric('哈希不一致', result.verification.hash_mismatches)}${metric('缺失文件', result.verification.missing_files)}${metric('零字节文件', result.verification.zero_byte_files)}${metric('敏感项', result.verification.unsafe_items)}</div></section>
-<p class="foot">D:\\Doubao_Backup\\final\\Doubao_Backup</p></main></body></html>\n`;
+<p class="foot">${escapeHtml(finalDir)}</p></main></body></html>\n`;
 
 atomicWriteJson(path.join(runDir, 'result.json'), result);
 atomicWriteText(path.join(runDir, 'result.html'), html);

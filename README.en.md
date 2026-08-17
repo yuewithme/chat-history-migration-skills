@@ -26,6 +26,8 @@
 
 All three Skills keep account data local, preserve the last known-good archive on failure, and publish only after verification succeeds.
 
+They share one portable path contract: `<ArchiveHome>/<source>/<profile>/`. No Skill assumes a drive letter or current directory, and every profile is identified by an `archive-profile.json` marker. See the [archive layout specification](./docs/archive-layout.md).
+
 ## Install
 
 Give your Agent the URL of the Skill directory you want to install:

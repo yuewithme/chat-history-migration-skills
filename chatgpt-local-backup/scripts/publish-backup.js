@@ -2,18 +2,24 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 
 function arg(name) {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : null;
 }
 const candidate = path.resolve(arg('--candidate') || '');
-const finalRoot = path.resolve('D:\\ChatGPT_Backup\\final');
+if (!arg('--candidate')) throw new Error('Usage: node publish-backup.js --root <profile-root> --candidate <candidate-dir>');
+const { root: backupRoot } = resolveArchiveRoot('chatgpt');
+readArchiveProfile(backupRoot, 'chatgpt', ['final/ChatGPT_Backup', 'state/raw']);
+const workingRoot = path.join(backupRoot, 'working');
+const finalRoot = path.join(backupRoot, 'final');
 const final = path.join(finalRoot, 'ChatGPT_Backup');
 const rollback = path.join(finalRoot, `ChatGPT_Backup.rollback-${Date.now()}`);
 
-if (!candidate.startsWith(finalRoot + path.sep) || candidate === final) {
-  throw new Error(`Candidate must be a separate directory under ${finalRoot}`);
+const candidateRelative = path.relative(workingRoot, candidate);
+if (!candidateRelative || candidateRelative.startsWith('..') || path.isAbsolute(candidateRelative)) {
+  throw new Error(`Candidate must be a separate directory under ${workingRoot}`);
 }
 const verificationPath = path.join(candidate, 'metadata', 'final-verification.json');
 if (!fs.existsSync(verificationPath)) throw new Error('Candidate has no final verification report');
@@ -22,6 +28,7 @@ if (verification.passed !== true) throw new Error('Candidate verification did no
 
 let oldMoved = false;
 try {
+  fs.mkdirSync(finalRoot, { recursive: true });
   if (fs.existsSync(final)) {
     fs.renameSync(final, rollback);
     oldMoved = true;

@@ -3,12 +3,14 @@
 const fs = require('fs');
 const path = require('path');
 
-function arg(name, fallback) {
+function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : fallback;
 }
 
-const tool = path.resolve(arg('--tool', 'D:\\ChatGPT_Backup\\tool\\export-chatgpt'));
+const toolArg = arg('--tool');
+if (!toolArg) throw new Error('Usage: node patch-exporter.js --tool <export-chatgpt-dir>');
+const tool = path.resolve(toolArg);
 const downloaderTarget = path.join(tool, 'lib', 'downloader.js');
 if (!fs.existsSync(downloaderTarget)) throw new Error(`Missing exporter file: ${downloaderTarget}`);
 

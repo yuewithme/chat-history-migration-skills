@@ -210,22 +210,24 @@ test('raw export orchestration runs end-to-end with a synthetic fixture and skip
     }],
   });
 
-  const first = JSON.parse(execFileSync(process.execPath, [path.join(scripts, 'run-raw-export.js'), '--raw', raw, '--fixture', fixture], { encoding: 'utf8' }));
+  const first = JSON.parse(execFileSync(process.execPath, [path.join(scripts, 'run-raw-export.js'), '--root', root, '--raw', raw, '--fixture', fixture], { encoding: 'utf8' }));
   assert.equal(first.saved, 1);
   assert.equal(first.attachments_saved, 1);
-  const second = JSON.parse(execFileSync(process.execPath, [path.join(scripts, 'run-raw-export.js'), '--raw', raw, '--fixture', fixture], { encoding: 'utf8' }));
+  const second = JSON.parse(execFileSync(process.execPath, [path.join(scripts, 'run-raw-export.js'), '--root', root, '--raw', raw, '--fixture', fixture], { encoding: 'utf8' }));
   assert.equal(second.saved, 0);
   assert.equal(second.skipped, 1);
 });
 
 test('backup initializer creates the fixed tree and a safe checkpoint', t => {
   const root = tempRoot(t);
-  execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root], { stdio: 'pipe' });
+  execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'test'], { stdio: 'pipe' });
   for (const relative of ['state/raw/conversations', 'state/raw/files', 'working', 'final', 'logs', 'tool', 'reports']) {
     assert.equal(fs.existsSync(path.join(root, relative)), true, relative);
   }
   const checkpoint = JSON.parse(fs.readFileSync(path.join(root, 'state', 'raw', 'checkpoint.json'), 'utf8'));
   assert.equal(checkpoint.provider, 'doubao');
+  const profile = JSON.parse(fs.readFileSync(path.join(root, 'archive-profile.json'), 'utf8'));
+  assert.equal(profile.source, 'doubao');
 });
 
 test('organize, verify, publish, and rebuild preserve data and deduplicate attachments', t => {

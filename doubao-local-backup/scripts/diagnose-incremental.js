@@ -9,7 +9,10 @@ function arg(name, fallback = null) {
   return index >= 0 ? process.argv[index + 1] : fallback;
 }
 
-const rawDir = path.resolve(arg('--raw', 'D:\\Doubao_Backup\\state\\raw'));
+const rootArg = arg('--root');
+const rawArg = arg('--raw');
+if (!rootArg && !rawArg) throw new Error('Usage: node diagnose-incremental.js --root <profile-root> [--raw <raw-dir>]');
+const rawDir = path.resolve(rawArg || path.join(path.resolve(rootArg), 'state', 'raw'));
 const limit = Number(arg('--limit', '10'));
 
 (async () => {

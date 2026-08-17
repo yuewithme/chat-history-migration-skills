@@ -1,0 +1,21 @@
+# Dependencies and local tooling
+node_modules/
+coverage/
+.env
+.env.*
+
+# Runtime data must stay under the selected archive profile root
+state/
+working/
+final/
+reports/
+logs/
+*.log
+*.partial
+*.tmp
+
+# OS and editor residue
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

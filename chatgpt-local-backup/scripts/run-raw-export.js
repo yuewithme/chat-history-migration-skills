@@ -4,11 +4,8 @@ const fs = require('fs');
 const http = require('http');
 const path = require('path');
 const { spawn } = require('child_process');
+const { arg, readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 
-function arg(name, fallback) {
-  const i = process.argv.indexOf(name);
-  return i >= 0 ? process.argv[i + 1] : fallback;
-}
 function stamp() {
   const d = new Date();
   const p = n => String(n).padStart(2, '0');
@@ -36,8 +33,10 @@ function bridge(action, args, session) {
   });
 }
 
-const tool = path.resolve(arg('--tool', 'D:\\ChatGPT_Backup\\tool\\export-chatgpt'));
-const working = path.resolve(arg('--working', 'D:\\ChatGPT_Backup\\working'));
+const { root: backupRoot } = resolveArchiveRoot('chatgpt');
+readArchiveProfile(backupRoot, 'chatgpt', ['final/ChatGPT_Backup', 'state/raw']);
+const tool = path.resolve(arg('--tool', path.join(backupRoot, 'tool', 'export-chatgpt')));
+const working = path.resolve(arg('--working', path.join(backupRoot, 'working')));
 const requestedRaw = arg('--raw', null);
 const raw = requestedRaw ? path.resolve(requestedRaw) : path.join(working, `raw_export_${stamp()}`);
 const session = 'chatgpt-local-backup';

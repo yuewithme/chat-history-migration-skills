@@ -1,4 +1,4 @@
 interface:
   display_name: "豆包本地备份"
-  short_description: "增量备份豆包会话和附件，并校验本地存档。"
-  default_prompt: "Use $doubao-local-backup to back up my Doubao chats and attachments to D:\\Doubao_Backup."
+  short_description: "按可移植档案目录增量备份豆包会话与附件"
+  default_prompt: "Use $doubao-local-backup to select a portable archive profile, then back up my Doubao chats and attachments."

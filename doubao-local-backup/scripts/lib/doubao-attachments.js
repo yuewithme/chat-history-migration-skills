@@ -137,7 +137,8 @@ function downloadOnce(url, target, redirectsLeft = 5) {
   });
 }
 
-async function downloadAttachment(candidate, workingRoot = 'D:\\Doubao_Backup\\working\\downloads') {
+async function downloadAttachment(candidate, workingRoot = process.env.DOUBAO_WORKING_ROOT) {
+  if (!workingRoot) throw new Error('Attachment working directory is required through DOUBAO_WORKING_ROOT');
   assertAllowedDownloadUrl(candidate.download_url);
   ensureDir(workingRoot);
   const target = path.join(workingRoot, `${safeName(candidate.attachment_id, 'attachment', 120)}.${process.pid}.${Date.now()}.partial`);

@@ -2,7 +2,7 @@
 
 ## Preflight
 
-1. Resolve the exact archive by explicit path or verified tenant ID. Read `_meta/policies/personal_knowledge_profile.json`; create it from the Skill template only when missing, and keep it private to the archive.
+1. Resolve the exact archive from explicit `-ArchiveRoot`, or from `ArchiveHome + feishu + profile`. Validate root-level `archive-profile.json` before reading account data. For a new profile run `scripts/initialize_archive.ps1`; never invent a drive letter or current-directory fallback. Read `_meta/policies/personal_knowledge_profile.json`; create it from the Skill template only when missing, and keep it private to the archive.
 2. If chat indexes exist, run `scripts/generate_chat_report.ps1`. Require the four rankings and automatically open the loopback report. If chat data is absent, mark the chat report `not_applicable` rather than failing Wiki work.
 3. Resolve `lark-cli` from `PATH`; do not hardcode an executable location. Run `lark-cli --version` and `lark-cli auth status --json --verify` before network work.
 4. Require verified user identity for personal data and keep explicit `--as user` across the workflow.

@@ -3,14 +3,10 @@
 const fs = require('fs');
 const path = require('path');
 const { assertInside, atomicWriteJson, ensureDir } = require('./lib/atomic-json');
+const { arg, readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 const { validateEnvelope } = require('./lib/conversation');
 const { safeName, sha256 } = require('./lib/file-store');
 const { emptyCheckpoint, saveCheckpoint } = require('./lib/checkpoint');
-
-function arg(name, fallback = null) {
-  const index = process.argv.indexOf(name);
-  return index >= 0 ? process.argv[index + 1] : fallback;
-}
 
 function jsonFiles(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -35,7 +31,8 @@ function linkOrCopy(source, target) {
   }
 }
 
-const root = path.resolve(arg('--root', 'D:\\Doubao_Backup'));
+const { root } = resolveArchiveRoot('doubao');
+readArchiveProfile(root, 'doubao', ['final/Doubao_Backup', 'state/raw']);
 const finalDir = path.resolve(arg('--final', path.join(root, 'final', 'Doubao_Backup')));
 const stateDir = path.resolve(arg('--state', path.join(root, 'state', 'raw')));
 const stateParent = path.dirname(stateDir);

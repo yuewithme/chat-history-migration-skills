@@ -9,6 +9,11 @@ $errors = [Collections.Generic.List[string]]::new()
 
 foreach ($skill in $skills) {
     $skillRoot = Join-Path $root $skill
+    foreach ($requiredPath in @('SKILL.md', 'README.md', 'agents/openai.yaml', 'scripts', 'references', 'LICENSE', '.gitignore')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $skillRoot $requiredPath))) {
+            $errors.Add("Missing $skill/$requiredPath")
+        }
+    }
     $skillFile = Join-Path $skillRoot 'SKILL.md'
     if (-not (Test-Path -LiteralPath $skillFile -PathType Leaf)) {
         $errors.Add("Missing $skill/SKILL.md")
@@ -46,6 +51,7 @@ Get-ChildItem -LiteralPath $root -File -Recurse -Force | Where-Object {
 $textExtensions = @('.md', '.json', '.yaml', '.yml', '.js', '.ps1', '.txt', '.csv', '.ndjson')
 $sensitivePatterns = @(
     @{ Name = 'private workspace path'; Pattern = 'D:\\Codex' },
+    @{ Name = 'hardcoded legacy archive root'; Pattern = '(?i)[A-Z]:\\(?:ChatGPT_Backup|Doubao_Backup|Feishu_Backup)(?:\\|`|\s|$)' },
     @{ Name = 'GitHub token'; Pattern = 'gh[opsu]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]+' },
     @{ Name = 'OpenAI-style secret'; Pattern = 'sk-[A-Za-z0-9_-]{20,}' },
     @{ Name = 'persisted bearer credential'; Pattern = '(?i)Authorization\s*:\s*Bearer\s+[A-Za-z0-9._~-]{12,}' }

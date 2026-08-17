@@ -2,13 +2,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const { arg, readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 
-function arg(name, fallback = null) {
-  const i = process.argv.indexOf(name);
-  return i >= 0 ? process.argv[i + 1] : fallback;
-}
-
-const backupRoot = path.resolve(arg('--root', 'D:\\ChatGPT_Backup'));
+const { root: backupRoot } = resolveArchiveRoot('chatgpt');
+readArchiveProfile(backupRoot, 'chatgpt', ['final/ChatGPT_Backup', 'state/raw']);
 const finalDir = path.resolve(arg('--final', path.join(backupRoot, 'final', 'ChatGPT_Backup')));
 const stateDir = path.resolve(arg('--state', path.join(backupRoot, 'state', 'raw')));
 const stateParent = path.dirname(stateDir);

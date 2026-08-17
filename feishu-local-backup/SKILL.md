@@ -27,7 +27,9 @@ Maintain private Feishu archives as durable, AI-readable personal data rather th
 
 ## Resolve the target
 
-- Read `references/archive-profile.json`. Prefer an explicit `-ArchiveRoot`; otherwise resolve by verified tenant ID and account identity, never by display title alone.
+- Use the shared path `<ArchiveHome>/feishu/<profile>/`. Prefer explicit `-ArchiveRoot`; otherwise use `-ArchiveHome` / `CHAT_HISTORY_ARCHIVE_HOME` plus `-ProfileId`. Never infer a drive letter or use the current directory.
+- Initialize new profiles with `scripts/initialize_archive.ps1 -ArchiveHome <home> -ProfileId <id>`. Adopt a reviewed legacy archive with `-ArchiveRoot <existing> -ProfileId <id> -AdoptExisting`; this adds a portable marker without moving data.
+- Read root-level `archive-profile.json` and require schema `chat-history-archive-profile-v1`, `source: feishu`, and the intended stable profile ID. Never select by display title alone.
 - Use explicit `--as user` for personal resources. Do not switch to bot identity or request new scopes silently.
 - Treat each archive root as durable state. Do not create a new dated root unless the user requests a separate snapshot.
 
@@ -62,6 +64,7 @@ Maintain private Feishu archives as durable, AI-readable personal data rather th
 
 ## Operations
 
+- Initialize or adopt a portable archive profile: `scripts/initialize_archive.ps1`.
 - Unified core-content backup: `scripts/sync_feishu_all.ps1`.
 - Full/incremental message synchronization: `scripts/sync_feishu_messages.ps1`. It writes authoritative JSON, expands threads according to mode, applies exclusions before downstream calls, merges with an overlap window, preserves prior-good data on failure, and does not bulk-download attachments.
 - Recursive Drive/Wiki inventory: `scripts/sync_feishu_knowledge.ps1`. It includes `my_library`, follows child/page continuations, retains raw enumeration envelopes, and writes stable NDJSON indexes.

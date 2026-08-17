@@ -2,11 +2,12 @@
 
 ## Root and identity
 
-Resolve archives through `archive-profile.json`, an explicit archive root, and verified tenant ID. A family may contain multiple accounts or tenants; each archive keeps independent state and policies.
+Use the shared portable path `<ArchiveHome>/feishu/<profile>/`. Resolve it through an explicit root or `ArchiveHome + profile`, then validate root-level `archive-profile.json` with schema `chat-history-archive-profile-v1` and `source: feishu`. Never infer a drive letter or use the current directory. A profile may represent one verified account/tenant lineage; each profile keeps independent state and policies.
 
 ## Core layout
 
 ```text
+archive-profile.json
 README_FOR_AI.md
 _meta/
   manifest.json

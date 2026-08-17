@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson } = require('./lib/atomic-json');
+const { readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 const { DoubaoLiveAdapter } = require('./lib/doubao-adapter');
 const { downloadAttachment, extractAttachmentCandidates, publicReference } = require('./lib/doubao-attachments');
 const { sha256 } = require('./lib/file-store');
@@ -19,7 +20,10 @@ function arg(name, fallback = null) {
   return index >= 0 ? process.argv[index + 1] : fallback;
 }
 
-const rawDir = path.resolve(arg('--raw', 'D:\\Doubao_Backup\\state\\raw'));
+const { root } = resolveArchiveRoot('doubao');
+readArchiveProfile(root, 'doubao', ['final/Doubao_Backup', 'state/raw']);
+const rawDir = path.resolve(arg('--raw', path.join(root, 'state', 'raw')));
+process.env.DOUBAO_WORKING_ROOT = path.join(root, 'working', 'downloads');
 const limitValue = arg('--limit-attachments');
 const limit = limitValue == null ? null : Number(limitValue);
 if (limit != null && (!Number.isInteger(limit) || limit < 1)) throw new Error('--limit-attachments must be a positive integer');

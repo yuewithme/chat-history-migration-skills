@@ -1,11 +1,29 @@
 ---
 name: doubao-local-backup
-description: Back up, resume, verify, repair, or inspect complete Doubao chat history and attachments under D:\Doubao_Backup through the user's logged-in browser session. Use for 豆包/Doubao migration, incremental backup, raw JSON capture, attachment recovery, checkpoint resume, integrity checks, and local archive maintenance.
+description: Back up, resume, verify, repair, or inspect complete Doubao chat history and attachments in a user-selected portable local archive. Use for 豆包/Doubao migration, incremental capture, raw JSON, attachment recovery, checkpoints, integrity checks, and archive maintenance. Never assume a drive letter or upload private archive data.
 ---
 
 # Doubao Local Backup
 
-Use the existing logged-in Doubao browser session. Keep all requests read-only.
+Use the intended logged-in Doubao browser session and keep source requests read-only.
+
+## Resolve the archive first
+
+Use `<ArchiveHome>/doubao/<profile>/`. Resolve the location from explicit `--root`, or from `--archive-home` / `CHAT_HISTORY_ARCHIVE_HOME` plus `--profile`. Never default to a drive letter or current directory.
+
+Initialize a profile:
+
+```text
+node scripts/init-backup.js --archive-home <home> --profile <profile-id>
+```
+
+Adopt an inspected legacy archive without moving it:
+
+```text
+node scripts/init-backup.js --root <existing-root> --profile <profile-id> --adopt-existing
+```
+
+Require `archive-profile.json` with `source: doubao`, except for a recognized legacy root pending adoption.
 
 ## References
 
@@ -14,40 +32,30 @@ Use the existing logged-in Doubao browser session. Keep all requests read-only.
 - Read [verification-policy.md](references/verification-policy.md) for verification or repair.
 - Read [reporting.md](references/reporting.md) for result handling.
 
-## Main entry
+## Main workflow
 
-Initialize once if needed:
-
-```text
-node scripts/init-backup.js
-```
-
-Run the complete chain:
+Run the complete chain with one resolved profile root:
 
 ```text
-node scripts/run-auto-backup.js --root D:\Doubao_Backup
+node scripts/run-auto-backup.js --root <profile-root>
 ```
 
-Use `--complete-listing` only for a full remote-list audit. The default scan checks recent items; changed conversations are still fetched completely.
-
-## Rules
+Use `--complete-listing` only for a full remote-list audit. The default scans recent items; changed conversations are still fetched completely.
 
 1. Confirm the intended account is logged in.
 2. Capture the current official request before replaying pagination.
-3. Save each conversation atomically, then download its attachments.
-4. Resume from `D:\Doubao_Backup\state\raw`; do not discard checkpoints after failure.
-5. Build a new candidate under `working`.
+3. Save each conversation atomically, then download its attachments under `<root>/working/downloads`.
+4. Resume from `<root>/state/raw`; never discard checkpoints after failure.
+5. Build a fresh candidate under `<root>/working`.
 6. Publish only after candidate verification passes.
 7. Rebuild state and verify final after publication.
 
-- Never access the browser credential store.
-- Never persist authentication material or complete signed URLs.
+Retry failed attachments with `node scripts/repair-existing-attachments.js --root <profile-root>`.
+
+## Safety and Git boundary
+
+- Never access the browser credential store or persist authentication material and complete signed URLs.
 - Never delete local history based on one remote listing.
-- Never upload account data or real fixtures.
+- Never upload account data or use real archive content as a fixture.
 - Keep the last verified final when any phase fails.
-
-Retry only failed attachments with:
-
-```text
-node scripts/repair-existing-attachments.js --root D:\Doubao_Backup
-```
+- Version only Skill instructions, UI metadata, scripts, references, synthetic tests, README, license, and CI configuration.

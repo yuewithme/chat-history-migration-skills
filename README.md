@@ -28,6 +28,8 @@ ChatGPT · 豆包 · 飞书 / Lark
 
 三个 Skill 共享一套底线：**原始数据留在本地，失败不覆盖上一份正确存档，验证通过后才发布。**
 
+它们也共享同一套可移植路径契约：`<ArchiveHome>/<source>/<profile>/`。Skill 不假设 D 盘或当前工作目录；每个 profile 都用 `archive-profile.json` 标记来源和布局版本。完整说明见[统一目录规范](./docs/archive-layout.md)。
+
 ## 安装
 
 在 Codex、Claude Code 或其他支持 [Agent Skills](https://agentskills.io) 的工具中，直接提供对应子目录地址。
@@ -112,16 +114,19 @@ flowchart LR
 chat-history-migration-skills/
 ├── README.md
 ├── README.en.md
+├── docs/archive-layout.md
 ├── chatgpt-local-backup/
 │   ├── SKILL.md
+│   ├── README.md
 │   ├── agents/
 │   ├── references/
-│   └── scripts/
+│   ├── scripts/
+│   └── LICENSE
 ├── doubao-local-backup/
 └── feishu-local-backup/
 ```
 
-每个一级目录都是一个可以独立安装的 Skill。本仓库的 `main` 分支只接收经过脱敏、测试和完整性检查的阶段性公开版本。
+每个一级目录都是一个可以独立安装的 Skill，并遵守相同的源码骨架；各来源的真实数据布局仍由本目录下的 reference 定义。本仓库的 `main` 分支只接收经过脱敏、测试和完整性检查的阶段性公开版本。
 
 ## 隐私与安全
 

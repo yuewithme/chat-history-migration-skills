@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { assertInside, atomicWriteJson, atomicWriteText, ensureDir } = require('./lib/atomic-json');
+const { readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 const { renderFailureHtml } = require('./lib/monitoring');
 const { sanitizeDiagnostic } = require('./lib/redaction');
 
@@ -55,13 +56,15 @@ function runJson(script, args, options = {}) {
   }
 }
 
-const root = path.resolve(arg('--root', 'D:\\Doubao_Backup'));
+const { root } = resolveArchiveRoot('doubao');
+readArchiveProfile(root, 'doubao', ['final/Doubao_Backup', 'state/raw']);
 const rawDir = path.resolve(arg('--raw', path.join(root, 'state', 'raw')));
 const reportRoot = path.resolve(arg('--report-root', path.join(root, 'reports')));
 const fixture = arg('--fixture');
 const completeListing = has('--complete-listing');
 assertInside(root, rawDir, 'Raw state');
 assertInside(root, reportRoot, 'Report root');
+process.env.DOUBAO_WORKING_ROOT = path.join(root, 'working', 'downloads');
 ensureDir(reportRoot);
 const releaseLock = acquireLock(path.join(root, 'tool', 'auto-backup.lock'));
 let phase = 'planning';
@@ -90,7 +93,7 @@ try {
     }
     activeRunId = preflight.plan_id;
     phase = 'collecting';
-    const exportArgs = ['--raw', rawDir, '--plan', preflight.plan_path, '--page-size', '20'];
+    const exportArgs = ['--root', root, '--raw', rawDir, '--plan', preflight.plan_path, '--page-size', '20'];
     if (fixture) exportArgs.push('--fixture', path.resolve(fixture));
     const exported = runJson(path.join(__dirname, 'run-raw-export.js'), exportArgs, { progress: true });
 

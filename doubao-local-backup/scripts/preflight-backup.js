@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson, assertInside, ensureDir } = require('./lib/atomic-json');
+const { readArchiveProfile, resolveArchiveRoot } = require('./lib/archive-profile');
 const { discoverConversations } = require('./lib/doubao-adapter');
 const { initializeRawState } = require('./lib/raw-state');
 const { sanitizeDiagnostic } = require('./lib/redaction');
@@ -66,7 +67,8 @@ function plannedActions(diff, finalVerification) {
   return actions;
 }
 
-const root = path.resolve(arg('--root', 'D:\\Doubao_Backup'));
+const { root } = resolveArchiveRoot('doubao');
+readArchiveProfile(root, 'doubao', ['final/Doubao_Backup', 'state/raw']);
 const rawDir = path.resolve(arg('--raw', path.join(root, 'state', 'raw')));
 const reportRoot = path.resolve(arg('--report-root', path.join(root, 'reports')));
 const fixture = arg('--fixture');

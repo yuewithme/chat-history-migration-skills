@@ -326,7 +326,7 @@ $chatList = Invoke-Lark @('im', '+chat-list', '--as', 'user', '--types=p2p,group
 Assert-LarkSuccess $chatList 'chat enumeration'
 Write-Utf8 (Join-Path $script:Root 'chats\raw\_chat_list.json') $chatList.Stdout
 $allChats = @($chatList.Json.data.chats)
-if (@($ChatId).Count) {
+if ($ChatId -and $ChatId.Count -gt 0) {
     $selected = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($id in $ChatId) { [void]$selected.Add($id) }
     $allChats = @($allChats | Where-Object { $selected.Contains([string]$_.chat_id) })

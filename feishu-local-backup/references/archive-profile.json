@@ -1,25 +1,7 @@
 {
-  "schema": "feishu-archive-family-profile-v2",
-  "archive_family_root": "D:\\Feishu_Backup",
-  "report_root": "D:\\Feishu_Backup\\reports",
-  "account_label": "replace-with-account-label",
-  "required_identity": "user",
-  "format": "feishu-personal-data-foundation-v1",
-  "archive_resolution": {
-    "prefer_explicit_archive_root": true,
-    "then_match_verified_tenant_id": true,
-    "never_match_by_display_title_only": true,
-    "never_silently_switch_identity": true
-  },
-  "known_archives": [
-    {
-      "profile_id": "example-tenant",
-      "tenant_id": "replace-with-verified-tenant-id",
-      "tenant_label": "replace-with-tenant-label",
-      "archive_root": "D:\\Feishu_Backup\\tenants\\example-tenant",
-      "selection": "tenant_id"
-    }
-  ],
-  "chat_rendering": "json-authoritative; Markdown on demand only",
-  "github_content_policy": "Skill code, schemas, and synthetic fixtures only; never archive data"
+  "schema": "chat-history-archive-profile-v1",
+  "source": "feishu",
+  "profile_id": "replace-with-stable-profile-id",
+  "layout_version": 1,
+  "created_at": "replace-with-utc-timestamp"
 }

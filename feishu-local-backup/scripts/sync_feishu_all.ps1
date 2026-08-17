@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
     [string]$ArchiveRoot,
+    [string]$ArchiveHome = $env:CHAT_HISTORY_ARCHIVE_HOME,
+    [ValidatePattern('^[a-z0-9][a-z0-9._-]{0,63}$')]
+    [string]$ProfileId,
     [ValidateSet('Full', 'Incremental')]
     [string]$Mode = 'Incremental',
     [ValidateSet('InventoryOnly', 'Knowledge', 'KnowledgeAndBinaries')]
@@ -20,8 +22,24 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if ($ArchiveRoot -and $PSBoundParameters.ContainsKey('ArchiveHome')) { throw 'Use either -ArchiveRoot or -ArchiveHome with -ProfileId, not both.' }
+if (-not $ArchiveRoot) {
+    if (-not $ArchiveHome -or -not $ProfileId) { throw 'Pass -ArchiveRoot or use -ArchiveHome / CHAT_HISTORY_ARCHIVE_HOME with -ProfileId.' }
+    $ArchiveRoot = Join-Path $ArchiveHome "feishu\$ProfileId"
+}
 $root = [System.IO.Path]::GetFullPath($ArchiveRoot).TrimEnd('\')
 if ($root -match '^[A-Za-z]:\\?$') { throw "Refusing drive root as archive: $root" }
+if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw "Archive root does not exist; run initialize_archive.ps1 first: $root" }
+$markerPath = Join-Path $root 'archive-profile.json'
+if (Test-Path -LiteralPath $markerPath -PathType Leaf) {
+    $marker = Get-Content -LiteralPath $markerPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($marker.schema -ne 'chat-history-archive-profile-v1' -or $marker.source -ne 'feishu') { throw "Archive profile mismatch: $markerPath" }
+    if ($ProfileId -and $marker.profile_id -ne $ProfileId) { throw "Profile ID mismatch: expected $ProfileId, found $($marker.profile_id)" }
+} else {
+    $recognizedLegacy = (Test-Path -LiteralPath (Join-Path $root '_meta')) -or (Test-Path -LiteralPath (Join-Path $root 'chats')) -or (Test-Path -LiteralPath (Join-Path $root 'drive')) -or (Test-Path -LiteralPath (Join-Path $root 'wiki'))
+    if (-not $recognizedLegacy) { throw "Archive has no profile marker and is not a recognized Feishu legacy layout: $root" }
+    Write-Warning "Using a recognized legacy archive without archive-profile.json: $root"
+}
 
 $plan = [ordered]@{
     schema = 'feishu-full-backup-plan-v1'; archive_root = $root; mode = $Mode; content_mode = $ContentMode
@@ -37,7 +55,6 @@ $plan = [ordered]@{
 }
 if ($PlanOnly) { $plan | ConvertTo-Json -Depth 20; exit 0 }
 
-[System.IO.Directory]::CreateDirectory($root) | Out-Null
 $runId = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ')
 $runRoot = Join-Path $root "_meta\runs\$runId"
 [System.IO.Directory]::CreateDirectory($runRoot) | Out-Null
