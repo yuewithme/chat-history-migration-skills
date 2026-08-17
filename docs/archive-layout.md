@@ -50,7 +50,7 @@
 }
 ```
 
-`layout_version` 由各来源定义；豆包当前为 2。`archive-profile.json` 不保存绝对路径、账号令牌或浏览器凭据。
+`layout_version` 由各来源定义；豆包当前为 3。`archive-profile.json` 不保存绝对路径、账号令牌或浏览器凭据。
 
 ## 3. 各来源 profile 内部内容
 
@@ -76,7 +76,7 @@ doubao/<profile>/
 ├── state/raw/                 # 检查点与增量数据
 ├── working/                   # 临时附件与候选
 ├── final/Doubao_Backup/       # conversations JSON、原始附件和 metadata
-├── documents/                 # markdown、json 和 indexes
+├── documents/                 # Markdown 文档
 ├── logs/
 └── reports/
 ```

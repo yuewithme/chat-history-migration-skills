@@ -58,16 +58,13 @@ node scripts/run-auto-backup.js --archive-home $archiveHome --profile primary --
 │   ├── conversations/         # 聊天记录 JSON
 │   ├── attachments/files/     # 原始文件
 │   └── metadata/              # 清单与校验 JSON
-├── documents/
-│   ├── markdown/              # 文件转写与知识文档 .md
-│   ├── json/                  # 文档结构化数据 .json
-│   └── indexes/               # 文档索引
+├── documents/                 # Markdown 文档 .md
 ├── reports/                   # 脱敏运行报告
 ├── logs/                      # 脱敏日志
 └── tool/                      # 锁与可重建工具缓存
 ```
 
-`documents/` 是持久内容区，不随正式备份发布而替换。所有路径由布局版本 2 固定，并记录为相对路径。
+聊天记录统一使用 JSON，文档统一使用 Markdown。`documents/` 不随正式备份发布而替换。
 
 ## 主链路
 

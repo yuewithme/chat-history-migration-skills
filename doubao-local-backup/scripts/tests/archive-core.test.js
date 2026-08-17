@@ -222,14 +222,14 @@ test('raw export orchestration runs end-to-end with a synthetic fixture and skip
 test('backup initializer creates the fixed tree and a safe checkpoint', t => {
   const root = tempRoot(t);
   execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'test'], { stdio: 'pipe' });
-  for (const relative of ['state/raw/conversations', 'state/raw/files', 'working', 'final', 'logs', 'tool', 'reports', 'documents/markdown', 'documents/json', 'documents/indexes']) {
+  for (const relative of ['state/raw/conversations', 'state/raw/files', 'working', 'final', 'logs', 'tool', 'reports', 'documents']) {
     assert.equal(fs.existsSync(path.join(root, relative)), true, relative);
   }
   const checkpoint = JSON.parse(fs.readFileSync(path.join(root, 'state', 'raw', 'checkpoint.json'), 'utf8'));
   assert.equal(checkpoint.provider, 'doubao');
   const profile = JSON.parse(fs.readFileSync(path.join(root, 'archive-profile.json'), 'utf8'));
   assert.equal(profile.source, 'doubao');
-  assert.equal(profile.layout_version, 2);
+  assert.equal(profile.layout_version, 3);
   assert.deepEqual(profile.paths, PROFILE_PATHS);
   assert.equal(Object.values(profile.paths).some(value => path.isAbsolute(value)), false);
   assert.equal(readArchiveProfile(root, 'doubao').legacy, false);
@@ -240,7 +240,7 @@ test('profile layout rejects changed or escaping paths', t => {
   execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'test'], { stdio: 'pipe' });
   const markerPath = path.join(root, 'archive-profile.json');
   const profile = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
-  profile.paths.document_markdown = '../outside';
+  profile.paths.documents = '../outside';
   writeJson(markerPath, profile);
   assert.throws(() => readArchiveProfile(root, 'doubao'), /Invalid archive profile path/);
 });
@@ -251,10 +251,36 @@ test('legacy adoption adds layout metadata without moving existing data', t => {
   writeJson(sentinel, { provider: 'doubao' });
   execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'primary', '--adopt-existing'], { stdio: 'pipe' });
   assert.equal(fs.existsSync(sentinel), true);
-  assert.equal(fs.existsSync(path.join(root, 'documents', 'markdown')), true);
+  assert.equal(fs.existsSync(path.join(root, 'documents')), true);
   const profile = readArchiveProfile(root, 'doubao').marker;
-  assert.equal(profile.layout_version, 2);
+  assert.equal(profile.layout_version, 3);
   assert.deepEqual(profile.paths, PROFILE_PATHS);
+});
+
+test('layout 2 upgrades only when deprecated document directories are empty', t => {
+  const root = tempRoot(t);
+  execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'primary'], { stdio: 'pipe' });
+  const markerPath = path.join(root, 'archive-profile.json');
+  const marker = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
+  marker.layout_version = 2;
+  marker.paths = {
+    chat_json: 'final/Doubao_Backup/conversations', original_files: 'final/Doubao_Backup/attachments/files',
+    archive_metadata: 'final/Doubao_Backup/metadata', document_markdown: 'documents/markdown',
+    document_json: 'documents/json', document_indexes: 'documents/indexes', state: 'state/raw',
+    working: 'working', reports: 'reports', logs: 'logs', tool: 'tool',
+  };
+  writeJson(markerPath, marker);
+  for (const relative of ['documents/markdown', 'documents/json', 'documents/indexes']) fs.mkdirSync(path.join(root, relative), { recursive: true });
+  const existingDocument = path.join(root, 'documents', 'markdown', 'keep.md');
+  fs.writeFileSync(existingDocument, '# keep\n', 'utf8');
+  assert.throws(() => execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'primary', '--upgrade-layout'], { stdio: 'pipe' }));
+  assert.equal(JSON.parse(fs.readFileSync(markerPath, 'utf8')).layout_version, 2);
+  fs.rmSync(existingDocument);
+  execFileSync(process.execPath, [path.join(scripts, 'init-backup.js'), '--root', root, '--profile', 'primary', '--upgrade-layout'], { stdio: 'pipe' });
+  const upgraded = readArchiveProfile(root, 'doubao').marker;
+  assert.equal(upgraded.layout_version, 3);
+  assert.deepEqual(upgraded.paths, PROFILE_PATHS);
+  assert.equal(fs.existsSync(path.join(root, 'documents', 'markdown')), false);
 });
 
 test('organize, verify, publish, and rebuild preserve data and deduplicate attachments', t => {

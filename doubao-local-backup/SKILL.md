@@ -23,7 +23,7 @@ Adopt an inspected legacy archive without moving it:
 node scripts/init-backup.js --root <existing-root> --profile <profile-id> --adopt-existing
 ```
 
-Require `archive-profile.json` with `source: doubao`. Layout version 2 fixes chat JSON, original files, Markdown documents, document JSON, indexes, state, reports, logs, and tool paths.
+Require `archive-profile.json` with `source: doubao`. Layout version 3 fixes chat JSON, Markdown documents, original files, metadata, state, reports, logs, and tool paths.
 
 ## References
 
@@ -52,7 +52,7 @@ Use `--complete-listing` only for a full remote-list audit. The default scans re
 
 Retry failed attachments with `node scripts/repair-existing-attachments.js --root <profile-root>`.
 
-Store persistent Markdown in `<root>/documents/markdown`, document JSON in `<root>/documents/json`, and document indexes in `<root>/documents/indexes`. Do not write these into `working` or `final`.
+Store chat records as JSON under `<root>/final/Doubao_Backup/conversations` and persistent documents as Markdown under `<root>/documents`.
 
 ## Safety and Git boundary
 

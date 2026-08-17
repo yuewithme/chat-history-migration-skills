@@ -2,10 +2,26 @@
 
 const fs = require('fs');
 const path = require('path');
+const { atomicWriteJson } = require('./atomic-json');
 
 const SCHEMA = 'chat-history-archive-profile-v1';
-const LAYOUT_VERSION = 2;
+const LAYOUT_VERSION = 3;
 const PROFILE_PATHS = Object.freeze({
+  chat_json: 'final/Doubao_Backup/conversations',
+  original_files: 'final/Doubao_Backup/attachments/files',
+  archive_metadata: 'final/Doubao_Backup/metadata',
+  documents: 'documents',
+  state: 'state/raw',
+  working: 'working',
+  reports: 'reports',
+  logs: 'logs',
+  tool: 'tool',
+});
+const PROFILE_DIRECTORIES = Object.freeze([
+  'working', 'final', 'logs', 'tool', 'reports', 'state',
+  PROFILE_PATHS.documents,
+]);
+const LAYOUT_2_PATHS = Object.freeze({
   chat_json: 'final/Doubao_Backup/conversations',
   original_files: 'final/Doubao_Backup/attachments/files',
   archive_metadata: 'final/Doubao_Backup/metadata',
@@ -18,12 +34,6 @@ const PROFILE_PATHS = Object.freeze({
   logs: 'logs',
   tool: 'tool',
 });
-const PROFILE_DIRECTORIES = Object.freeze([
-  'working', 'final', 'logs', 'tool', 'reports', 'state',
-  PROFILE_PATHS.document_markdown,
-  PROFILE_PATHS.document_json,
-  PROFILE_PATHS.document_indexes,
-]);
 
 function arg(name, fallback = null, argv = process.argv) {
   const index = argv.indexOf(name);
@@ -42,17 +52,21 @@ function normalizeProfileId(value) {
   return normalized;
 }
 
-function validateProfilePaths(paths) {
+function validatePaths(paths, expected, version) {
   if (!paths || typeof paths !== 'object' || Array.isArray(paths)) throw new Error('Archive profile paths are missing');
-  const expectedKeys = Object.keys(PROFILE_PATHS).sort();
+  const expectedKeys = Object.keys(expected).sort();
   const actualKeys = Object.keys(paths).sort();
-  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) throw new Error('Archive profile paths do not match layout version 2');
+  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) throw new Error(`Archive profile paths do not match layout version ${version}`);
   for (const key of expectedKeys) {
     const value = String(paths[key] || '').replace(/\\/g, '/');
-    if (value !== PROFILE_PATHS[key] || path.posix.isAbsolute(value) || value === '..' || value.startsWith('../')) {
+    if (value !== expected[key] || path.posix.isAbsolute(value) || value === '..' || value.startsWith('../')) {
       throw new Error(`Invalid archive profile path: ${key}`);
     }
   }
+}
+
+function validateProfilePaths(paths) {
+  validatePaths(paths, PROFILE_PATHS, LAYOUT_VERSION);
 }
 
 function resolveArchiveRoot(source, argv = process.argv) {
@@ -86,6 +100,7 @@ function readArchiveProfile(root, source, legacyIndicators = []) {
     if (marker.source !== source) throw new Error(`Archive source mismatch: expected ${source}, found ${marker.source}`);
     normalizeProfileId(marker.profile_id);
     if (marker.layout_version === LAYOUT_VERSION) validateProfilePaths(marker.paths);
+    else if (marker.layout_version === 2) validatePaths(marker.paths, LAYOUT_2_PATHS, 2);
     else if (marker.layout_version !== 1) throw new Error(`Unsupported archive layout version in ${markerPath}`);
     return { marker, markerPath, legacy: false };
   }
@@ -95,11 +110,38 @@ function readArchiveProfile(root, source, legacyIndicators = []) {
   return { marker: null, markerPath, legacy: true };
 }
 
-function initializeArchive({ root, source, profileId, directories = PROFILE_DIRECTORIES, legacyIndicators = [], adoptExisting = false }) {
+function upgradeArchiveProfile(root, marker, markerPath) {
+  if (marker.layout_version === LAYOUT_VERSION) return marker;
+  if (![1, 2].includes(marker.layout_version)) throw new Error(`Cannot upgrade archive layout version ${marker.layout_version}`);
+  if (marker.layout_version === 2) {
+    for (const relative of ['documents/markdown', 'documents/json', 'documents/indexes']) {
+      const directory = path.join(root, relative);
+      if (fs.existsSync(directory) && fs.readdirSync(directory).length) {
+        throw new Error(`Move existing files out of ${directory} before upgrading the layout`);
+      }
+    }
+    for (const relative of ['documents/indexes', 'documents/json', 'documents/markdown']) {
+      const directory = path.join(root, relative);
+      if (fs.existsSync(directory)) fs.rmdirSync(directory);
+    }
+  }
+  fs.mkdirSync(path.join(root, PROFILE_PATHS.documents), { recursive: true });
+  const upgraded = {
+    ...marker,
+    layout_version: LAYOUT_VERSION,
+    paths: { ...PROFILE_PATHS },
+    layout_updated_at: new Date().toISOString(),
+  };
+  atomicWriteJson(markerPath, upgraded);
+  return upgraded;
+}
+
+function initializeArchive({ root, source, profileId, directories = PROFILE_DIRECTORIES, legacyIndicators = [], adoptExisting = false, upgradeLayout = false }) {
   fs.mkdirSync(root, { recursive: true });
   const markerPath = path.join(root, 'archive-profile.json');
   if (fs.existsSync(markerPath)) {
-    const existing = readArchiveProfile(root, source, legacyIndicators).marker;
+    let existing = readArchiveProfile(root, source, legacyIndicators).marker;
+    if (upgradeLayout) existing = upgradeArchiveProfile(root, existing, markerPath);
     for (const relative of directories) fs.mkdirSync(path.join(root, relative), { recursive: true });
     return existing;
   }
@@ -134,5 +176,6 @@ module.exports = {
   normalizeProfileId,
   readArchiveProfile,
   resolveArchiveRoot,
+  upgradeArchiveProfile,
   validateProfilePaths,
 };

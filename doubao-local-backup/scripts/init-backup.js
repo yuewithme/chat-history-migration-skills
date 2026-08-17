@@ -16,6 +16,7 @@ const marker = initializeArchive({
   directories: PROFILE_DIRECTORIES,
   legacyIndicators: ['final/Doubao_Backup', 'state/raw'],
   adoptExisting: has('--adopt-existing'),
+  upgradeLayout: has('--upgrade-layout'),
 });
 const raw = path.join(root, 'state', 'raw');
 for (const directory of [path.join(root, 'working'), path.join(root, 'final'), path.join(root, 'logs'), path.join(root, 'tool'), path.join(root, 'reports')]) {
